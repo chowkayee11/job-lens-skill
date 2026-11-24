@@ -71,17 +71,22 @@ def main(argv: list[str] | None = None) -> int:
     written = 0
     dp = WebPage(chromium_options=co)
     try:
-        for keyword in keywords:
-            for _, city_code in cities:
-                remaining = args.limit - written
-                if remaining <= 0:
-                    break
-                stats = crawl_jobs_by_query(
-                    dp, keyword, city_code, str(raw_file), remaining, existing, filter_query, run_seen
-                )
-                written += stats[1]
-            if written >= args.limit:
+        # 城市与关键词交错轮转，每个组合最多取 2 条，避免第一个关键词/城市
+        # 独占全局 50 条额度。轮次偏移确保四个关键词都能覆盖不同城市。
+        combinations = [
+            (keywords[(city_index + round_index) % len(keywords)], city_code)
+            for round_index in range(len(keywords))
+            for city_index, (_, city_code) in enumerate(cities)
+        ]
+        for keyword, city_code in combinations:
+            remaining = args.limit - written
+            if remaining <= 0:
                 break
+            query_limit = min(2, remaining)
+            stats = crawl_jobs_by_query(
+                dp, keyword, city_code, str(raw_file), query_limit, existing, filter_query, run_seen
+            )
+            written += stats[1]
         if written and not args.no_detail:
             crawl_job_details(dp, str(raw_file), set())
     finally:

@@ -169,6 +169,10 @@ def _crawl_paginated(dp, url, file_path, count_limit, existing_links, run_seen=N
                 job_list = r.response.body.get('zpData', {}).get('jobList', [])
                 if job_filter is not None:
                     job_list = [j for j in job_list if job_filter(j)]
+                if count_limit:
+                    # BOSS 每页通常返回 15 条；最后一页必须按剩余额度截断，
+                    # 否则 limit=50 会在第 4 页写成 60 条。
+                    job_list = job_list[:max(0, count_limit - total_written)]
                 written, skipped, run_dups = process_job_list(
                     job_list, file_path, existing_links, csv_writer, run_seen
                 )

@@ -82,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
             if important or args.force:
                 send_system_notification("Job Lens", subject)
             sent = send_email(args.run_dir, mail_settings(args.env_file), force=args.force)
-            print("邮件已发送" if sent else "未达到主动通知条件，已跳过邮件")
+            print("邮件已发送" if sent else "邮件未发送")
             return 0
         except Exception as exc:
             record_notification_failure(args.run_dir, exc)

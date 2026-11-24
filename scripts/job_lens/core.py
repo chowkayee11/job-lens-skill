@@ -10,6 +10,7 @@ import smtplib
 import ssl
 import subprocess
 import sys
+from collections import Counter
 from datetime import datetime
 from email.message import EmailMessage
 from pathlib import Path
@@ -351,9 +352,19 @@ def digest_html(run_dir: Path) -> tuple[str, str, bool]:
             f"<br><em>证据：</em>{html.escape(str(proof_text))}"
             f"<br><em>风险：</em>{html.escape(risk_text)}</li>"
         )
-    subject = f"job-lens：{len(results)} 个岗位分析完成，重点推荐 {len(top)} 个"
-    body = f"<h1>job-lens 岗位摘要</h1><p>本次详细展示前 {len(top)} 个岗位。</p><ol>{items}</ol>"
-    return subject, body, should_notify(results)
+    important = should_notify(results)
+    if important:
+        subject = f"job-lens：{len(results)} 个岗位分析完成，重点推荐 {len(top)} 个"
+        body = f"<h1>job-lens 岗位摘要</h1><p>本次详细展示前 {len(top)} 个岗位。</p><ol>{items}</ol>"
+    else:
+        counts = Counter(item["grade"] for item in results)
+        subject = "job-lens：本轮暂无合适岗位"
+        body = (
+            "<h1>job-lens 检查完成</h1>"
+            f"<p>本轮采集并分析 {len(results)} 个新岗位，暂无达到推荐条件的岗位。</p>"
+            f"<p>A/B/C/D：{counts['A']}/{counts['B']}/{counts['C']}/{counts['D']}。下轮将继续采集。</p>"
+        )
+    return subject, body, important
 
 
 def load_env_file(path: Path) -> dict[str, str]:
@@ -381,8 +392,6 @@ def mail_settings(env_file: Path | None = None) -> dict[str, str]:
 
 def send_email(run_dir: Path, settings: dict[str, str], force: bool = False) -> bool:
     subject, body, important = digest_html(run_dir)
-    if not important and not force:
-        return False
     required = ("JOB_LENS_SMTP_HOST", "JOB_LENS_SMTP_USER", "JOB_LENS_SMTP_PASSWORD", "JOB_LENS_EMAIL_TO")
     missing = [key for key in required if not settings.get(key)]
     if missing:

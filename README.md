@@ -60,7 +60,7 @@ python scripts/job_lens_cli.py notify "runs/<timestamp>" --dry-run
 
 复制 `.env.example` 为 `.env`，填写 SMTP 主机、邮箱和授权码。SMTP 只用于通知，不是模型 API。
 
-默认仅在出现 A 级岗位或至少 3 个 B 级岗位时发送邮件。真实发送前应先运行 `--dry-run`；失败会生成 `notification_retry.json`，不会重新采集岗位。
+每轮运行都会发送邮件；没有新岗位或没有达到推荐条件的岗位时，会发送简短状态邮件，不在正文展开 C/D 级岗位。真实发送前应先运行 `--dry-run`；失败会生成 `notification_retry.json`，不会重新采集岗位。
 
 ## 数据目录
 

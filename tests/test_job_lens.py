@@ -187,6 +187,47 @@ class JobLensTests(unittest.TestCase):
             client.login.assert_called_once_with("sender@example.com", "secret")
             client.send_message.assert_called_once()
 
+    def test_email_sends_status_when_no_jobs_are_suitable(self):
+        run = self.root / "run"
+        run.mkdir()
+        jobs = make_jobs(1)
+        jobs[0].update({"job_id": "real", "title": jobs[0]["职位"], "company": jobs[0]["公司"], "city": "武汉", "salary": "15-20K"})
+        dump(run / "jobs.json", jobs)
+        analysis = analysis_for(jobs)
+        analysis["jobs"][0].update({"grade": "C", "score": 55})
+        dump(run / "analysis.json", analysis)
+
+        subject, body, important = digest_html(run)
+        self.assertFalse(important)
+        self.assertEqual(subject, "job-lens：本轮暂无合适岗位")
+        self.assertIn("A/B/C/D：0/0/1/0", body)
+        self.assertNotIn("<li><strong>", body)
+
+        settings = {
+            "JOB_LENS_SMTP_HOST": "smtp.example.com",
+            "JOB_LENS_SMTP_PORT": "465",
+            "JOB_LENS_SMTP_USER": "sender@example.com",
+            "JOB_LENS_SMTP_PASSWORD": "secret",
+            "JOB_LENS_EMAIL_FROM": "sender@example.com",
+            "JOB_LENS_EMAIL_TO": "reader@example.com",
+        }
+        with patch("job_lens.core.smtplib.SMTP_SSL") as smtp:
+            client = smtp.return_value
+            client.__enter__.return_value = client
+            self.assertTrue(send_email(run, settings))
+            client.send_message.assert_called_once()
+
+    def test_digest_handles_zero_new_jobs(self):
+        run = self.root / "run"
+        run.mkdir()
+        dump(run / "jobs.json", [])
+        dump(run / "analysis.json", {"profile": {}, "jobs": []})
+
+        subject, body, important = digest_html(run)
+        self.assertFalse(important)
+        self.assertEqual(subject, "job-lens：本轮暂无合适岗位")
+        self.assertIn("分析 0 个新岗位", body)
+
 
 if __name__ == "__main__":
     unittest.main()

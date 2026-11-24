@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "job-lens analysis",
+  "type": "object",
+  "required": ["profile", "jobs"],
+  "properties": {
+    "profile": {"type": "object"},
+    "jobs": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "required": ["job_id", "grade", "score", "summary", "evidence", "risks", "resume_suggestions", "greeting"],
+        "properties": {
+          "job_id": {"type": "string"},
+          "grade": {"enum": ["A", "B", "C", "D"]},
+          "score": {"type": "integer", "minimum": 0, "maximum": 100},
+          "summary": {"type": "string"},
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["requirement", "status", "resume_evidence", "reason"],
+              "properties": {
+                "requirement": {"type": "string"},
+                "status": {"enum": ["matched", "insufficient", "gap"]},
+                "resume_evidence": {"type": "array", "items": {"type": "string"}},
+                "reason": {"type": "string"}
+              }
+            }
+          },
+          "risks": {"type": "array", "items": {"type": "string"}},
+          "resume_suggestions": {"type": "array", "items": {"type": "string"}},
+          "greeting": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "name": "job-lens",
+      "description": "运行 job-lens 本地流水线",
+      "command": "python",
+      "args": ["../../scripts/job_lens_cli.py"]
+    },
+    {
+      "name": "job-lens-crawl",
+      "description": "使用本机 Chrome 采集未处理岗位",
+      "command": "python",
+      "args": ["../../scripts/job_lens_crawl.py"]
+    }
+  ]
+}

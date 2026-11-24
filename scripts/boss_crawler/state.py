@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-状态管理：时间统计、步骤管理
+采集请求耗时统计
 """
 
 import time
-
-from .utils import format_filter_display
-
 
 # ==================== 时间统计 ====================
 
@@ -152,88 +149,3 @@ class TimeStats:
 
 # 全局时间统计器
 time_stats = TimeStats()
-
-
-# ==================== 步骤管理 ====================
-
-class StepManager:
-    """
-    步骤管理器
-    支持返回上一步、展示已选信息
-    """
-    def __init__(self):
-        self.current_step = 0
-        self.selections = {
-            'mode': None,           # 'list' 或 'custom'
-            'positions': [],        # [(path, code, name), ...]
-            'cities': [],           # [(name, code), ...]
-            'count_limit': None,    # 数量限制
-            'with_detail': None,    # 是否爬取详情
-            'sleep_enabled': None,  # 是否开启sleep等待
-            'filter_params': {
-                'jobType': [],
-                'salary': [],
-                'experience': [],
-                'degree': [],
-                'scale': [],
-            },
-        }
-
-    def reset(self):
-        """重置所有状态（用于新爬取会话）"""
-        self.__init__()
-
-    def go_back(self):
-        """返回上一步"""
-        if self.current_step > 1:
-            self.current_step -= 1
-            return True
-        return False
-
-    def next_step(self):
-        """进入下一步"""
-        self.current_step += 1
-
-    def show_selections(self):
-        """展示已选信息"""
-        print("\n" + "=" * 50)
-        print("  当前已选信息")
-        print("=" * 50)
-
-        if self.selections['mode']:
-            mode = self.selections['mode']
-            mode_text = {'custom': '自定义搜索', 'company': '公司定向',
-                         'list': '列表选择'}.get(mode, mode)
-            print(f"\n  岗位模式: {mode_text}")
-
-        if self.selections['positions']:
-            pos_names = [p[2] for p in self.selections['positions']]
-            mode = self.selections['mode']
-            label = '公司名' if mode == 'company' else ('关键词' if mode == 'custom' else '岗位')
-            print(f"  {label}: {', '.join(pos_names)}")
-
-        if self.selections['cities']:
-            city_names = [c[0] for c in self.selections['cities']]
-            print(f"  城市: {', '.join(city_names)}")
-
-        if self.selections['count_limit'] is not None:
-            print(f"  数量限制: {self.selections['count_limit']} 条/城市/岗位")
-        elif self.selections['count_limit'] is None and self.current_step > 3:
-            print(f"  数量限制: 全部")
-
-        if self.selections['with_detail'] is not None:
-            print(f"  爬取详情: {'是' if self.selections['with_detail'] else '否'}")
-
-        if self.selections['sleep_enabled'] is not None:
-            print(f"  等待时间: {'开启' if self.selections['sleep_enabled'] else '关闭'}")
-
-        filter_params = self.selections.get('filter_params', {})
-        filter_display = format_filter_display(filter_params)
-        if filter_display != '不限':
-            print(f"  筛选条件: {filter_display}")
-
-        print()
-
-
-# 全局步骤管理器
-step_manager = StepManager()

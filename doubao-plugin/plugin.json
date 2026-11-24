@@ -1,0 +1,7 @@
+{
+  "name": "job-lens-skill",
+  "version": "0.1.0",
+  "description": "本地岗位发现、简历证据匹配、报告与邮件通知",
+  "display_name": "Job Lens",
+  "platforms": ["desktop"]
+}

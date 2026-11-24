@@ -132,12 +132,6 @@ CSV_FIELDS = [
 _SKILL_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ASSETS_DIR = os.path.join(_SKILL_ROOT, 'assets')
 
-# 公司定向采集的输出目录。放 post_data/ 下而不是别处，关键是为了让 match 阶段
-# （resume_matcher/data_loader.list_available_job_files 用 os.walk 递归扫 post_data/）
-# 能像读 custom/ 一样把公司采集结果无缝扫进匹配池 —— 这是「公司定向 → 路径 B
-# match/deliver」整条链路能走通的落点。
-COMPANY_OUTPUT_DIR = os.path.join(ASSETS_DIR, 'post_data', 'company')
-
 # ==================== Chrome 配置 ====================
 
 co = ChromiumOptions()
@@ -151,19 +145,14 @@ USER_DATA_DIR = os.path.join(ASSETS_DIR, 'chrome_user_data')
 os.makedirs(USER_DATA_DIR, exist_ok=True)
 co.set_argument('--user-data-dir', USER_DATA_DIR)
 
-# 隐藏自动化标识，避免网站限制
-co.set_argument('--disable-blink-features=AutomationControlled')
-
 # ==================== Sleep 配置 ====================
 
 
 class SleepConfig:
     """Sleep时间配置管理
 
-    风控对抗的核心是**随机抖动**：固定间隔（哪怕隔得久）是机器指纹，BOSS 直聘大约
-    200 个详情就触发风控。这里的真实等待 = base + uniform(0, jitter)，节奏不可预测
-    才像人。详情页串行爬，base 不能太低——0.5s 是当初 API 直调时代的残留，现在走
-    浏览器必须让出来。
+    通过串行请求、间隔与分批冷却降低对站点的访问压力。遇到访问限制时由上层停止，
+    不尝试绕过验证码或平台限制。
     """
     def __init__(self):
         self.enabled = True  # 是否开启sleep等待
@@ -173,7 +162,7 @@ class SleepConfig:
         self.login_wait = 2  # 登录检测后的等待时间（秒）
         self.retry_wait = 1.0  # 重试等待时间（秒）——真实 = 1.0 + uniform(0,0.6) ≤2s
         self.api_wait = 5  # API响应等待时间（秒）
-        self.jitter = 0.6  # 随机抖动上限（秒）：真实等待 = base + uniform(0, jitter)；0.6s 既保随机性又让 page/retry 落在 ≤2s
+        self.jitter = 0.6  # 避免所有页面同时发起请求
         self.detail_batch = 30  # 每 N 个详情请求后进入一次分批冷却
         self.batch_cooldown = 30  # 分批冷却时长（秒）
 

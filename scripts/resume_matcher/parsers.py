@@ -5,6 +5,7 @@
 """
 
 import os
+import unicodedata
 
 # 尝试导入文件解析库
 try:
@@ -35,13 +36,16 @@ def parse_resume_file(file_path: str) -> str:
             if not HAS_DOCX:
                 raise ImportError("python-docx未安装，请运行: pip install python-docx")
             text = parse_docx(file_path)
-        elif ext in ['.md', '.markdown', '.txt']:
+        elif ext in ['.md', '.markdown', '.txt', '.tex']:
             text = parse_plain_text(file_path)
         else:
             raise ValueError(f"不支持的文件格式: {ext}")
 
         if not text.strip():
             print("警告: 文件内容为空或无法解析")
+            return ""
+        if ext == '.pdf' and looks_garbled(text):
+            print("警告: PDF 文本层疑似字体编码损坏，请改用 DOCX、Markdown、TXT 或 TEX 源文件")
             return ""
 
         print(f"解析完成，获取到 {len(text)} 个字符")
@@ -50,6 +54,20 @@ def parse_resume_file(file_path: str) -> str:
     except Exception as e:
         print(f"解析失败: {e}")
         return ""
+
+
+def looks_garbled(text: str) -> bool:
+    """识别 PDF 字体映射损坏后混入的大量异常文字脚本。"""
+    letters = [char for char in text if unicodedata.category(char).startswith('L')]
+    if len(letters) < 20:
+        return False
+    allowed = ('LATIN', 'CJK', 'IDEOGRAPH', 'HIRAGANA', 'KATAKANA', 'HANGUL')
+    unusual = 0
+    for char in letters:
+        name = unicodedata.name(char, '')
+        if not any(token in name for token in allowed):
+            unusual += 1
+    return unusual / len(letters) > 0.08
 
 
 def parse_pdf(file_path: str) -> str:
@@ -74,7 +92,7 @@ def parse_docx(file_path: str) -> str:
 
 
 def parse_plain_text(file_path: str) -> str:
-    """读取纯文本简历（md / markdown / txt）
+    """读取纯文本简历（md / markdown / txt / tex）
 
     Markdown 标记不做剥离：`##` 标题和 `-` 列表本身就是章节结构，
     对下游解析是信息而不是噪声。

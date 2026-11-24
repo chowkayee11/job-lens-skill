@@ -20,6 +20,7 @@ from job_lens.core import (  # noqa: E402
     send_email,
     validate_analysis,
 )
+from resume_matcher.parsers import looks_garbled, parse_resume_file  # noqa: E402
 
 
 def dump(path: Path, value) -> None:
@@ -89,6 +90,17 @@ class JobLensTests(unittest.TestCase):
         self.assertEqual(len(jobs_2), 10)
         self.assertFalse({job["job_id"] for job in jobs_1} & {job["job_id"] for job in jobs_2})
         self.assertEqual(len(json.loads(history.read_text(encoding="utf-8"))["jobs"]), 60)
+
+    def test_latex_resume_is_read_as_text(self):
+        resume = self.root / "resume.tex"
+        resume.write_text("\\section{项目经历} Python Agent", encoding="utf-8")
+
+        self.assertIn("Python Agent", parse_resume_file(str(resume)))
+
+    def test_detects_broken_pdf_font_mapping_text(self):
+        broken = "ᇛࡁ၎ ৳༢ٚൔ ޿ᇏഽٓն࿐ Ӂ௖ླ౰ಒಪ " * 10
+
+        self.assertTrue(looks_garbled(broken))
 
     def test_prepare_caps_analysis_at_30(self):
         run = self.root / "run"

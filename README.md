@@ -1,6 +1,6 @@
 # Job Lens Skill
 
-本地岗位发现与求职决策助手，支持 Codex、Claude Code、DeepSeek Harness 和豆包电脑版。
+本地岗位发现与求职决策助手，支持 Codex、Claude Code、DeepSeek Harness 和豆包电脑版。简历输入支持 PDF、DOCX、Markdown、TXT 和 LaTeX 源文件。
 
 Job Lens 从简历出发采集或导入岗位，把每项岗位要求与简历原文对应起来，区分“已匹配、证据不足、真实缺口”，再生成推荐等级、简历修改建议、招呼语、HTML 报告和邮件摘要。
 
